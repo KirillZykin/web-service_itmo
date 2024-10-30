@@ -1,6 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Request, Form
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
@@ -35,39 +35,43 @@ def show_login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 # User registration route
-@app.post("/register/", response_model=Token)
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    # Check if user already exists
-    db_user = db.query(User).filter(User.email == user.email).first()
+@app.post("/register/", response_class=HTMLResponse)
+async def register(
+    request: Request,
+    db: Session = Depends(get_db),
+    email: str = Form(...),
+    password: str = Form(...)
+):
+    # Проверка существующего пользователя
+    db_user = db.query(User).filter(User.email == email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        return templates.TemplateResponse("register.html", {"request": request, "error": "Email уже зарегистрирован"})
     
-    # Hash the password and create the user
-    hashed_password = get_password_hash(user.password)
-    new_user = User(email=user.email, hashed_password=hashed_password)
+    # Хэширование пароля и создание пользователя
+    hashed_password = get_password_hash(password)
+    new_user = User(email=email, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     
-    # Generate JWT token
+    # Создание JWT токена и установка его в cookie
     access_token = create_access_token(data={"sub": new_user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
+    return response
 
 # User login route
-@app.post("/login/", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == form_data.username).first()
+@app.post("/login/", response_class=HTMLResponse)
+async def login(request: Request, db: Session = Depends(get_db), username: str = Form(...), password: str = Form(...)):
+    user = db.query(User).filter(User.email == username).first()
     
-    if not user or not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    if not user or not verify_password(password, user.hashed_password):
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Неправильный email или пароль"})
     
-    # Generate JWT token for authentication
     access_token = create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
+    return response
 
 
 # Protected route to check JWT token validity
