@@ -1,4 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -12,6 +15,24 @@ from database import User
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+templates = Jinja2Templates(directory="templates")
+# Настройка маршрута для статических файлов
+app.mount("/static", StaticFiles(directory="templates/static"), name="static")
+
+# Обработчик для корневой страницы
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+# Обработчик для страницы регистрации
+@app.get("/register", response_class=HTMLResponse)
+def show_register(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+# Обработчик для страницы логина
+@app.get("/login", response_class=HTMLResponse)
+def show_login(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
 # User registration route
 @app.post("/register/", response_model=Token)

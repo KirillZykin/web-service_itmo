@@ -7,3 +7,4 @@ passlib
 python-multipart
 bcrypt
 psycopg2-binary
+Jinja2
