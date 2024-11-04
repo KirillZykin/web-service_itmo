@@ -1,5 +1,10 @@
 fastapi
 uvicorn
-passlib[bcrypt]
 PyJWT
 sqlalchemy
+python-jose
+passlib
+python-multipart
+bcrypt
+psycopg2-binary
+Jinja2
