@@ -1,9 +1,11 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Form
+from starlette.middleware.sessions import SessionMiddleware
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
+import secrets
 
 from database import SessionLocal, engine, Base, get_db
 from schemas import UserCreate, Token, UserResponse
@@ -15,6 +17,8 @@ from database import User
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+# Генерация ключа для подписи cookies
+app.add_middleware(SessionMiddleware, secret_key=secrets.token_hex(32))
 templates = Jinja2Templates(directory="templates")
 # Настройка маршрута для статических файлов
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
@@ -79,7 +83,12 @@ async def login(request: Request, db: Session = Depends(get_db), username: str =
 def access_cabinet(current_user: User = Depends(get_current_user)):
     return {"message": f"Welcome to your cabinet, {current_user.email}!", "user": current_user}
 
-
+# Обработчик для корневой страницы
 @app.get("/")
-def read_root():
-    return {"message": "Welcome to the FastAPI Auth Demo"}
+async def home(request: Request):
+    user = request.session.get("user")
+    if user:
+        user_chats = [1, 2, 3]  # Здесь вы можете получить реальные чаты пользователя из базы данных
+        return templates.TemplateResponse("index.html", {"request": request, "user_chats": user_chats, "user": user})
+    return templates.TemplateResponse("index.html", {"request": request, "user": None})
+

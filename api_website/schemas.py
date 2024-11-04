@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-#перенести в orm
+#TODO перенести в orm
 # Pydantic model for user registration
 class UserCreate(BaseModel):
     email: str

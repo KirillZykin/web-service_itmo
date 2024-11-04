@@ -2,17 +2,39 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Добро пожаловать!</title>
+    <title>Добро пожаловать</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <div class="welcome-container">
-        <h1>Добро пожаловать в наш чат!</h1>
-        <p>Общайтесь в реальном времени, находите друзей и создавайте комнаты для общения.</p>
-        <div class="button-group">
-            <a href="/login" class="button">Войти</a>
-            <a href="/register" class="button">Регистрация</a>
-        </div>
-    </div>
+    {% if user %}
+        <h1>Привет, {{ user.email }}!</h1>
+        <a href="/create-chat">Создать новую комнату</a>
+        <h2>Ваши комнаты:</h2>
+        <ul>
+            {% for chat in user_chats %}
+                <li>
+                    {{ chat.name }} 
+                    <form action="/delete-chat/{{ chat.id }}" method="post">
+                        <button type="submit">Удалить</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+        
+        <h2>Поиск чатов</h2>
+        <form action="/search-chats" method="get">
+            <input type="text" name="query" placeholder="Название чата">
+            <button type="submit">Найти</button>
+        </form>
+        <ul>
+            {% for chat in found_chats %}
+                <li>{{ chat.name }}</li>
+            {% endfor %}
+        </ul>
+        
+    {% else %}
+        <h1>Добро пожаловать в онлайн-чат!</h1>
+        <p><a href="/register">Регистрация</a> или <a href="/login">Войти</a> для продолжения</p>
+    {% endif %}
 </body>
 </html>
