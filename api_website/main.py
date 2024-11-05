@@ -7,9 +7,8 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 import secrets
 
-from database import SessionLocal, engine, Base, get_db
+from database import verify_password, get_password_hash, SessionLocal, engine, Base, get_db
 from schemas import UserCreate, Token, UserResponse
-from utils import verify_password, get_password_hash
 from auth import create_access_token, get_current_user
 from database import User
 
@@ -80,7 +79,7 @@ def access_cabinet(current_user: User = Depends(get_current_user)):
 
 # Обработчик для корневой страницы
 @app.get("/")
-async def home(request: Request):
+async def home(request: Request,db: Session = Depends(get_db)):
     user = request.session.get("user")
     if user:
         user_chats = [1, 2, 3]  # Здесь вы можете получить реальные чаты пользователя из базы данных
