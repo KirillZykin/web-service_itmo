@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 import secrets
 
 from database import verify_password, get_password_hash, SessionLocal, engine, Base, get_db
-from schemas import UserCreate, Token, UserResponse
+from orm import UserCreate, Token, UserResponse
 from auth import create_access_token, get_current_user
 from database import User
 
