@@ -23,11 +23,6 @@ templates = Jinja2Templates(directory="templates")
 # Настройка маршрута для статических файлов
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
-# Обработчик для корневой страницы
-@app.get("/", response_class=HTMLResponse)
-def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
 # Обработчик для страницы регистрации
 @app.get("/register", response_class=HTMLResponse)
 def show_register(request: Request):
@@ -74,7 +69,7 @@ async def login(request: Request, db: Session = Depends(get_db), username: str =
     
     access_token = create_access_token(data={"sub": user.email})
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
+    request.session["user"] = {"email": user.email}  # Пример добавления пользователя в сессию
     return response
 
 
