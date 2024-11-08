@@ -1,0 +1,54 @@
+services:
+  nginx:
+    build: nginx
+    container_name: nginx
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    depends_on:
+      - website
+#      - chat
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+
+  db:
+    image: postgres:14
+    container_name: db
+    environment:
+      POSTGRES_USER: my_user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: web_database
+    volumes:
+      - ./db/dump:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  website:
+    build: ./api_website
+    container_name: website_container
+    networks:
+      - app-network
+    environment:
+      DATABASE_URL: "postgresql://my_user:pass@db/web_database"
+    depends_on:
+      - db
+
+#  chat:
+#    build: ./api_chat
+#    container_name: chat_container
+#    networks:
+#      - app-network
+#    environment:
+#      DATABASE_URL: "postgresql://web_user:password@db/web_database"
+#    depends_on:
+#      - db
+
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  dump:
+    external: false

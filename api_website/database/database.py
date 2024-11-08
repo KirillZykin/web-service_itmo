@@ -4,7 +4,8 @@ from sqlalchemy.orm import sessionmaker,Session, relationship
 from typing import List
 
 # SQLite database URL
-DATABASE_URL = "postgresql://myuser:5322@localhost:5432/webdatabase"
+DATABASE_URL = "postgresql://my_user:pass@db:5432/web_database"
+# DATABASE_URL = "postgresql://web_user:password@db:5432/web_database"
 
 # Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)
