@@ -1,23 +1,21 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request, Form
-from starlette.middleware.sessions import SessionMiddleware
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI, Depends, status, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordRequestForm
-import secrets
+from starlette.middleware.sessions import SessionMiddleware
 
-from database import verify_password, get_password_hash, SessionLocal, engine, Base, get_db
-from orm import UserCreate, Token, UserResponse
 from auth import create_access_token, get_current_user
 from database import User, get_chats_by_user
+from database import verify_password, get_password_hash, engine, Base, get_db
+from orm import UserResponse
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 # Генерация ключа для подписи cookies
-app.add_middleware(SessionMiddleware, secret_key=secrets.token_hex(32))
+app.add_middleware(SessionMiddleware, secret_key="secret_key_123")
 templates = Jinja2Templates(directory="templates")
 # Настройка маршрута для статических файлов
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
@@ -44,14 +42,14 @@ async def register(
     db_user = db.query(User).filter(User.email == email).first()
     if db_user:
         return templates.TemplateResponse("register.html", {"request": request, "error": "Email уже зарегистрирован"})
-    
+
     # Хэширование пароля и создание пользователя
     hashed_password = get_password_hash(password)
     new_user = User(email=email, hashed_password=hashed_password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    
+
     # Создание JWT токена и установка его в cookie
     access_token = create_access_token(data={"sub": new_user.email})
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
@@ -62,10 +60,10 @@ async def register(
 @app.post("/login/", response_class=HTMLResponse)
 async def login(request: Request, db: Session = Depends(get_db), username: str = Form(...), password: str = Form(...)):
     user = db.query(User).filter(User.email == username).first()
-    
+
     if not user or not verify_password(password, user.hashed_password):
         return templates.TemplateResponse("login.html", {"request": request, "error": "Неправильный email или пароль"})
-    
+
     access_token = create_access_token(data={"sub": user.email})
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     request.session["user"] = {"email": user.email}  # Пример добавления пользователя в сессию
