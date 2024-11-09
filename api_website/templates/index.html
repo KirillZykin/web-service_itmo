@@ -4,17 +4,22 @@
     <meta charset="UTF-8">
     <title>Добро пожаловать</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <script src="static/main.js"></script>
 </head>
 <body>
     {% if user %}
         <h1>Привет, {{ user.email }}!</h1>
-        <a href="/create-chat">Создать новую комнату</a>
+        <h2>Добавить новую комнату</h2>
+        <form action="/create-chat" method="post">
+            <input type="text" name="room_name" placeholder="Название комнаты" required>
+            <button type="submit">Создать</button>
+        </form>
         <h2>Ваши комнаты:</h2>
         <ul>
             {% for chat in user_chats %}
                 <li>
                     {{ chat.name }} 
-                    <form action="/delete-chat/{{ chat.id }}" method="post">
+                    <form action="/delete-chat/{{ chat.id }}" method="delete">
                         <button type="submit">Удалить</button>
                     </form>
                 </li>
