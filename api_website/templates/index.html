@@ -8,7 +8,10 @@
 </head>
 <body>
     {% if user %}
-        <h1>Привет, {{ user.email }}!</h1>
+        <div class="header">
+            <h1>Привет, {{ user.email }}!</h1>
+            <a href="/logout" class="logout-button">Выйти</a>
+        </div>
         <h2>Добавить новую комнату</h2>
         <form action="/create-chat" method="post">
             <input type="text" name="room_name" placeholder="Название комнаты" required>

@@ -68,6 +68,11 @@ async def login(request: Request, db: Session = Depends(get_db), username: str =
     request.session["token"] = access_token
     return response
 
+@app.get("/logout", response_class=HTMLResponse)
+async def logout(request: Request):
+    request.session.clear()
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return response
 
 # Protected route to check JWT token validity
 @app.get("/me/", response_model=UserResponse)
@@ -78,7 +83,7 @@ def access_cabinet(current_user: User = Depends(get_current_user)):
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, db: Session = Depends(get_db), is_auth: bool = Depends(is_user_auth)):
     user = request.session.get("user")
-    if (user is not None) & (is_auth == True):
+    if is_auth:
         user_chats = get_chats_by_user(db, user['id'])  # Получаем список чатов пользователя
         return templates.TemplateResponse("index.html", {"request": request, "user_chats": user_chats, "user": user})
     return templates.TemplateResponse("index.html", {"request": request, "user": None})
