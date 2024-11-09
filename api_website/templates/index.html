@@ -17,11 +17,9 @@
         <h2>Ваши комнаты:</h2>
         <ul>
             {% for chat in user_chats %}
-                <li>
-                    {{ chat.name }} 
-                    <form action="/delete-chat/{{ chat.id }}" method="delete">
-                        <button type="submit">Удалить</button>
-                    </form>
+                <li id = "room_chat_{{ chat.id }}">
+                    {{ chat.name }}
+                    <button onclick="deleteChat('{{ chat.id }}')">Удалить</button>
                 </li>
             {% endfor %}
         </ul>
