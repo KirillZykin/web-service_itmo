@@ -22,7 +22,7 @@
             {% for chat in user_chats %}
                 <li id = "room_chat_{{ chat.id }}">
                     {{ chat.name }}
-                    <button>Перейти в чат</button>
+                    <button onclick="enterChatAndGetToken('{{ chat.name }}')">Перейти в чат</button>
                     <button onclick="deleteChat('{{ chat.id }}')">Удалить</button>
                 </li>
             {% endfor %}

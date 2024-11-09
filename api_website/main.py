@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, status, Request, Form, Query
+from fastapi import FastAPI, Depends, status, Request, Form, Query, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -9,7 +9,7 @@ from auth import create_access_token, get_current_user, is_user_auth
 from database import User, get_chats_by_user
 from database import verify_password, get_password_hash, engine, Base, get_db, create_chat, delete_chat, \
     search_chats_by_name
-from orm import UserResponse, ChatCreate
+from orm import UserResponse, ChatCreate, ChatTokenRequest
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -116,3 +116,17 @@ async def search_chats(request: Request, query: str = Query(...), db: Session = 
         chat_list = [{"name": chat.name} for chat in found_chats]
         return JSONResponse(content={"chats": chat_list})
     return JSONResponse(content={"error": "User not authenticated"}, status_code=401)
+
+@app.post("/get_token_chat/")
+async def get_token_for_chat(chat_request: ChatTokenRequest, request: Request):
+    user = request.session.get("user")
+    # Validate chat_name or add additional logic if needed
+
+    if not chat_request.chat_name:
+        raise HTTPException(status_code=400, detail="Chat name is required")
+
+    # Generate the JWT token
+    access_token = create_access_token(data={"sub": user["email"], "name_chat": chat_request.chat_name})
+
+    # Return the token as a JSON response
+    return {"access_token": access_token, "token_type": "bearer"}

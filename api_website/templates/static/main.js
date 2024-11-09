@@ -25,6 +25,7 @@ async function searchChats(event) {
         if (result.chats) {
             result.chats.forEach(chat => {
                 const chatItem = document.createElement("li");
+                chatItem.onclick = () => enterChatAndGetToken(chat.name);
                 chatItem.textContent = chat.name;
                 foundChatsList.appendChild(chatItem);
             });
@@ -35,5 +36,29 @@ async function searchChats(event) {
     } catch (error) {
         console.error("Ошибка при выполнении поиска:", error);
     //     TODO алерт
+    }
+}
+
+// функция перехода в чат
+async function enterChatAndGetToken(chatName) {
+    try {
+        const response = await fetch('/get_token_chat/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ "chat_name": chatName }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            const token = data.access_token;
+            localStorage.setItem("token", token);
+            window.location.href = "/chat/";
+        } else {
+            console.error('Error getting token:', data.detail);
+        }
+    } catch (error) {
+        console.error('Request failed', error);
     }
 }

@@ -39,3 +39,6 @@ class ChatListResponse(BaseModel):
 class ChatResponse(BaseModel):
     message: str
     chat: Optional[Chat] = None
+
+class ChatTokenRequest(BaseModel):
+    chat_name: str
