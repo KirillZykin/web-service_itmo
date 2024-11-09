@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Depends, status, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Depends, status, Request, Form, Query
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -7,7 +7,8 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from auth import create_access_token, get_current_user
 from database import User, get_chats_by_user
-from database import verify_password, get_password_hash, engine, Base, get_db, create_chat, delete_chat
+from database import verify_password, get_password_hash, engine, Base, get_db, create_chat, delete_chat, \
+    search_chats_by_name
 from orm import UserResponse, ChatCreate
 
 # Create database tables
@@ -84,6 +85,7 @@ async def home(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse("index.html", {"request": request, "user_chats": user_chats, "user": user})
     return templates.TemplateResponse("index.html", {"request": request, "user": None})
 
+# Обработчик создания чата
 @app.post("/create-chat")
 async def create_chat_endpoint(request: Request, db: Session = Depends(get_db), room_name: str = Form(...)):
     user = request.session.get("user")
@@ -93,6 +95,7 @@ async def create_chat_endpoint(request: Request, db: Session = Depends(get_db), 
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     return {"error": "User not authenticated"}
 
+# Обработчик удаления чата
 @app.delete("/delete-chat/{id}")
 async def delete_chat_endpoint(request: Request, id: int, db: Session = Depends(get_db)):
     user = request.session.get("user")
@@ -100,3 +103,13 @@ async def delete_chat_endpoint(request: Request, id: int, db: Session = Depends(
         delete_chat(db, id, user["id"])
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     return {"error": "User not authenticated"}
+
+# Обработчик поиска чатов
+@app.get("/search-chats", response_class=JSONResponse)
+async def search_chats(request: Request, query: str = Query(...), db: Session = Depends(get_db)):
+    user = request.session.get("user")
+    if user:
+        found_chats = search_chats_by_name(db, query)
+        chat_list = [{"name": chat.name} for chat in found_chats]
+        return JSONResponse(content={"chats": chat_list})
+    return JSONResponse(content={"error": "User not authenticated"}, status_code=401)

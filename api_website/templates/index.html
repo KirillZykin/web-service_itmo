@@ -19,21 +19,20 @@
             {% for chat in user_chats %}
                 <li id = "room_chat_{{ chat.id }}">
                     {{ chat.name }}
+                    <button>Перейти в чат</button>
                     <button onclick="deleteChat('{{ chat.id }}')">Удалить</button>
                 </li>
             {% endfor %}
         </ul>
-        
-        <h2>Поиск чатов</h2>
-        <form action="/search-chats" method="get">
-            <input type="text" name="query" placeholder="Название чата">
-            <button type="submit">Найти</button>
-        </form>
-        <ul>
-            {% for chat in found_chats %}
-                <li>{{ chat.name }}</li>
-            {% endfor %}
-        </ul>
+
+    <h2>Поиск чатов</h2>
+    <form onsubmit="searchChats(event)">
+        <input type="text" id="searchQuery" placeholder="Название чата">
+        <button type="submit">Найти</button>
+    </form>
+    <ul id="foundChats">
+        <!-- Найденные чаты будут отображены здесь -->
+    </ul>
         
     {% else %}
         <h1>Добро пожаловать в онлайн-чат!</h1>
