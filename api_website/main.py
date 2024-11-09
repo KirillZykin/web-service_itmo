@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from auth import create_access_token, get_current_user
+from auth import create_access_token, get_current_user, is_user_auth
 from database import User, get_chats_by_user
 from database import verify_password, get_password_hash, engine, Base, get_db, create_chat, delete_chat, \
     search_chats_by_name
@@ -51,10 +51,7 @@ async def register(
     db.commit()
     db.refresh(new_user)
 
-    # Создание JWT токена и установка его в cookie
-    access_token = create_access_token(data={"sub": new_user.email})
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
     return response
 
 # User login route
@@ -68,6 +65,7 @@ async def login(request: Request, db: Session = Depends(get_db), username: str =
     access_token = create_access_token(data={"sub": user.email})
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     request.session["user"] = {"email": user.email, "id": user.id}
+    request.session["token"] = access_token
     return response
 
 
@@ -78,9 +76,9 @@ def access_cabinet(current_user: User = Depends(get_current_user)):
 
 # Обработчик для корневой страницы
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, db: Session = Depends(get_db)):
+async def home(request: Request, db: Session = Depends(get_db), is_auth: bool = Depends(is_user_auth)):
     user = request.session.get("user")
-    if user:
+    if (user is not None) & (is_auth == True):
         user_chats = get_chats_by_user(db, user['id'])  # Получаем список чатов пользователя
         return templates.TemplateResponse("index.html", {"request": request, "user_chats": user_chats, "user": user})
     return templates.TemplateResponse("index.html", {"request": request, "user": None})

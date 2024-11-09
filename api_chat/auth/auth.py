@@ -13,12 +13,12 @@ credentials_exception = HTTPException(
 )
 
 # функция возвращения email или названия чата
-def get_user_chat(token: str, type:str) -> Optional[str]:
+def get_user_chat(token: str, get_type: str) -> Optional[str]:
     if token is None:
         raise credentials_exception
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if type == "email":
+        if get_type == "email":
             result: str = payload.get("sub")
         else:
             result: str = payload.get("chat")
