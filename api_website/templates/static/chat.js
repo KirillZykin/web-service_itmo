@@ -1,11 +1,15 @@
-// Подключаем WebSocket к микросервису chat
-const ws = new WebSocket("ws://localhost:8000/chat"); // замените на ваш адрес сервера
+const ws = new WebSocket(`ws://127.0.0.1/ws/chat/`);
+const token = localStorage.getItem("token");
 
 const messagesContainer = document.getElementById("messages");
 
 // Обрабатываем подключение
 ws.onopen = () => {
-    console.log("Connected to chat server");
+    const authMessage = {
+        type: "auth",
+        token: token
+    };
+    socket.send(JSON.stringify(authMessage));
 };
 
 // Обрабатываем получение сообщений
@@ -36,3 +40,10 @@ function sendMessage() {
         input.value = ""; // Очищаем поле ввода
     }
 }
+
+// Отправка сообщения по клавише Enter
+document.getElementById("messageInput").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        sendMessage();
+    }
+});

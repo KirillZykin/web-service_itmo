@@ -30,11 +30,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@app.get("/")
-async def get(request: Request):
-    return templates.TemplateResponse(request=request, name="chat.html")
-
-@app.websocket("/ws")
+@app.websocket("/ws/chat/")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:

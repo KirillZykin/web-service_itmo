@@ -2,8 +2,7 @@ from typing import Optional
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
 
-# Secret key for JWT encryption
-SECRET_KEY = "secretkey"  # Replace with a more secure value
+SECRET_KEY = "secretkey"
 ALGORITHM = "HS256"
 
 credentials_exception = HTTPException(

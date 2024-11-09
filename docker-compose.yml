@@ -8,7 +8,7 @@ services:
       - app-network
     depends_on:
       - website
-#      - chat
+      - chat
     volumes:
       - ./nginx/logs:/var/log/nginx
 
@@ -34,15 +34,15 @@ services:
     depends_on:
       - db
 
-#  chat:
-#    build: ./api_chat
-#    container_name: chat_container
-#    networks:
-#      - app-network
-#    environment:
-#      DATABASE_URL: "postgresql://web_user:password@db/web_database"
-#    depends_on:
-#      - db
+  chat:
+    build: ./api_chat
+    container_name: chat_container
+    networks:
+      - app-network
+    environment:
+      DATABASE_URL: "postgresql://web_user:password@db/web_database"
+    depends_on:
+      - db
 
 
 networks:
