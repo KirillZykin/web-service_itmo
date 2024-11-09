@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Depends, status, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Depends, status, Request, Form, Query
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -7,8 +7,9 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from auth import create_access_token, get_current_user
 from database import User, get_chats_by_user
-from database import verify_password, get_password_hash, engine, Base, get_db
-from orm import UserResponse
+from database import verify_password, get_password_hash, engine, Base, get_db, create_chat, delete_chat, \
+    search_chats_by_name
+from orm import UserResponse, ChatCreate
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -66,8 +67,7 @@ async def login(request: Request, db: Session = Depends(get_db), username: str =
 
     access_token = create_access_token(data={"sub": user.email})
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    request.session["user"] = {"email": user.email}  # Пример добавления пользователя в сессию
-    request.session["user"] = {"id": user.id}
+    request.session["user"] = {"email": user.email, "id": user.id}
     return response
 
 
@@ -77,11 +77,39 @@ def access_cabinet(current_user: User = Depends(get_current_user)):
     return {"message": f"Welcome to your cabinet, {current_user.email}!", "user": current_user}
 
 # Обработчик для корневой страницы
-@app.get("/")
-async def home(request: Request,db: Session = Depends(get_db)):
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request, db: Session = Depends(get_db)):
     user = request.session.get("user")
     if user:
-        user_chats = get_chats_by_user(db, user['id'])  # Здесь вы можете получить реальные чаты пользователя из базы данных
+        user_chats = get_chats_by_user(db, user['id'])  # Получаем список чатов пользователя
         return templates.TemplateResponse("index.html", {"request": request, "user_chats": user_chats, "user": user})
     return templates.TemplateResponse("index.html", {"request": request, "user": None})
 
+# Обработчик создания чата
+@app.post("/create-chat")
+async def create_chat_endpoint(request: Request, db: Session = Depends(get_db), room_name: str = Form(...)):
+    user = request.session.get("user")
+    if user:
+        chat_data = ChatCreate(name=room_name)
+        create_chat(db, chat_data, user["id"])
+        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return {"error": "User not authenticated"}
+
+# Обработчик удаления чата
+@app.delete("/delete-chat/{id}")
+async def delete_chat_endpoint(request: Request, id: int, db: Session = Depends(get_db)):
+    user = request.session.get("user")
+    if user:
+        delete_chat(db, id, user["id"])
+        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return {"error": "User not authenticated"}
+
+# Обработчик поиска чатов
+@app.get("/search-chats", response_class=JSONResponse)
+async def search_chats(request: Request, query: str = Query(...), db: Session = Depends(get_db)):
+    user = request.session.get("user")
+    if user:
+        found_chats = search_chats_by_name(db, query)
+        chat_list = [{"name": chat.name} for chat in found_chats]
+        return JSONResponse(content={"chats": chat_list})
+    return JSONResponse(content={"error": "User not authenticated"}, status_code=401)

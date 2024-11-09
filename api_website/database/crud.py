@@ -46,7 +46,7 @@ def get_chats_by_user(db: Session, user_id: int):
 def get_chat_by_id(db: Session, chat_id: int):
     return db.query(Chat).filter(Chat.id == chat_id).first()
 
-def search_chats(db: Session, search_term: str):
+def search_chats_by_name(db: Session, search_term: str):
     return db.query(Chat).filter(Chat.name.ilike(f"%{search_term}%")).all()
 
 def delete_chat(db: Session, chat_id: int, user_id: int):
