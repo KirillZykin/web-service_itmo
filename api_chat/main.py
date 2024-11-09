@@ -28,10 +28,6 @@ class ConnectionManager:
         for connection in self.active_connections:
             await connection.send_text(message)
 
-    async def broadcast_binary(self, binary_data: bytes):
-        for connection in self.active_connections:
-            await connection.send_bytes(binary_data)
-
 manager = ConnectionManager()
 
 @app.get("/")
