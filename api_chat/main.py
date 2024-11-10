@@ -1,14 +1,18 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from fastapi.staticfiles import StaticFiles
 from typing import List
-from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Use specific origins in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
 class ConnectionManager:
     def __init__(self):
