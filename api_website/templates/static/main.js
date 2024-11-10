@@ -26,6 +26,7 @@ async function searchChats(event) {
             result.chats.forEach(chat => {
                 const chatItem = document.createElement("li");
                 chatItem.onclick = () => enterChatAndGetToken(chat.name);
+                chatItem.className = "chat-item";
                 chatItem.textContent = chat.name;
                 foundChatsList.appendChild(chatItem);
             });

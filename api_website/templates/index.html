@@ -7,39 +7,57 @@
     <script src="static/main.js"></script>
 </head>
 <body>
-    {% if user %}
-        <div class="header">
-            <h1>Привет, {{ user.email }}!</h1>
-            <a href="/logout" class="logout-button">Выйти</a>
-        </div>
+{% if user %}
+<div class="container">
+    <!-- Приветствие и кнопка выхода -->
+    <div class="header">
+        <h1>Привет, {{ user.email }}!</h1>
+    </div>
+
+    <!-- Форма добавления комнаты -->
+    <div class="form-container">
         <h2>Добавить новую комнату</h2>
         <form action="/create-chat" method="post">
             <input type="text" name="room_name" placeholder="Название комнаты" required>
             <button type="submit">Создать</button>
         </form>
+    </div>
+
+    <!-- Список комнат пользователя -->
+    <div class="rooms-list">
         <h2>Ваши комнаты:</h2>
         <ul>
             {% for chat in user_chats %}
-                <li id = "room_chat_{{ chat.id }}">
-                    {{ chat.name }}
+            <li id="room_chat_{{ chat.id }}">
+                {{ chat.name }}
+                <div class="button-group">
                     <button onclick="enterChatAndGetToken('{{ chat.name }}')">Перейти в чат</button>
                     <button onclick="deleteChat('{{ chat.id }}')">Удалить</button>
-                </li>
+                </div>
+            </li>
             {% endfor %}
         </ul>
+    </div>
 
-    <h2>Поиск чатов</h2>
-    <form onsubmit="searchChats(event)">
-        <input type="text" id="searchQuery" placeholder="Название чата">
-        <button type="submit">Найти</button>
-    </form>
-    <ul id="foundChats">
-        <!-- Найденные чаты будут отображены здесь -->
-    </ul>
-        
-    {% else %}
-        <h1>Добро пожаловать в онлайн-чат!</h1>
-        <p><a href="/register">Регистрация</a> или <a href="/login">Войти</a> для продолжения</p>
-    {% endif %}
+    <!-- Форма поиска чатов -->
+    <div class="form-container">
+        <h2>Поиск чатов</h2>
+        <form onsubmit="searchChats(event)">
+            <input type="text" id="searchQuery" placeholder="Название чата">
+            <button type="submit">Найти</button>
+        </form>
+        <ul id="foundChats">
+            <!-- Найденные чаты будут отображены здесь -->
+        </ul>
+    </div>
+    <a href="/logout" class="logout-button">Выйти из аккаунта</a>
+</div>
+
+{% else %}
+<div class="welcome-container">
+    <h1>Добро пожаловать в онлайн-чат!</h1>
+    <p><a href="/register">Регистрация</a> или <a href="/login">Войти</a> для продолжения</p>
+</div>
+{% endif %}
 </body>
 </html>
