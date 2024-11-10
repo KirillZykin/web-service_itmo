@@ -1,7 +1,12 @@
+import json
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
-from typing import List
+from typing import Optional, Tuple
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+
+from auth import get_user_chat
+from models import ConnectionManager
 
 app = FastAPI()
 app.add_middleware(
@@ -13,45 +18,53 @@ app.add_middleware(
 )
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: List[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
-
 manager = ConnectionManager()
+
+async def authenticate_user(websocket: WebSocket, token: str) -> Optional[Tuple[str, str]]:
+    user = get_user_chat(token, "email")
+    chat = get_user_chat(token, "name_chat")
+    if user and chat:
+        return user, chat
+    else:
+        await websocket.send_text("Ошибка: не удалось подключиться")
+        return None
+
+async def handle_authentication(websocket: WebSocket, token: str) -> Optional[str]:
+    user_data = await authenticate_user(websocket, token)
+    if user_data:
+        user, chat = user_data
+        await manager.update_chat_for_connection(websocket, chat) #TODO надо ли?
+        await manager.broadcast(chat, f"{user} присоединился к чату {chat}, поприветствуйте!")
+        return chat
+    return None
+
+async def handle_message(websocket: WebSocket, chat: str, user: str, message: str):
+    if chat:
+        await manager.broadcast(f"{user} : {message}", chat)
+    else:
+        await websocket.send_text("Ошибка: сообщение не отправлено. Вы не подключены к чату.")
+
 
 @app.websocket("/ws/chat/")
 async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
+    await manager.connect(websocket, "")
+
+    name_chat = ""
+    name_user = ""
     try:
-        await manager.send_personal_message("Welcome to the WebSocket server!", websocket)
         while True:
-            try:
-                data = await websocket.receive()
-                logger.info(f"Received data: {data}")
-                if "text" in data and isinstance(data['type'], str):
-                    await manager.broadcast(f"{data['text']}")
-                elif "bytes" in data and isinstance(data['bytes'], bytes):
-                    await manager.broadcast_binary(data['bytes'])
-            except WebSocketDisconnect:
-                manager.disconnect(websocket)
-                break
-            except Exception as e:
-                logger.error(f"An error occurred: {e}")
-                await websocket.close(reason=str(e))
+                data = await websocket.receive_text()
+                message = json.loads(data)
+                message_type = message.get("type")
+
+                if message_type == "join":
+                    token = message.get("token")
+                    name_chat = await handle_authentication(websocket, token)
+                    name_user = get_user_chat(token, "email")
+                else:
+                    message = message.get("content")
+                    await handle_message(websocket, name_chat, name_user, message)
+
+
     except WebSocketDisconnect:
         manager.disconnect(websocket)

@@ -20,7 +20,7 @@ def get_user_chat(token: str, get_type: str) -> Optional[str]:
         if get_type == "email":
             result: str = payload.get("sub")
         else:
-            result: str = payload.get("chat")
+            result: str = payload.get("name_chat")
         if result is None:
             raise credentials_exception
         return result
