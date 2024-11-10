@@ -9,7 +9,7 @@ ws.onopen = () => {
         type: "auth",
         token: token
     };
-    socket.send(JSON.stringify(authMessage));
+    ws.send(JSON.stringify(authMessage));
 };
 
 // Обрабатываем получение сообщений

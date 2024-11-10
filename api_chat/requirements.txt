@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+websockets
 PyJWT
 sqlalchemy
 python-jose
