@@ -12,13 +12,18 @@ async function deleteChat(chatId) {
 
 async function searchChats(event) {
     event.preventDefault();  // Останавливаем стандартное отправление формы
-    // TODO проверка на количество символов (>6)
     const searchQuery = document.getElementById("searchQuery").value;
+    const foundChatsList = document.getElementById("foundChats");
+
+    if (searchQuery.length < 6) {
+        alert("Введите более 5 символов для поиска.");
+        foundChatsList.innerHTML = "";
+        return;
+    }
 
     try {
         const response = await fetch(`/search-chats?query=${encodeURIComponent(searchQuery)}`);
         const result = await response.json();
-        const foundChatsList = document.getElementById("foundChats");
         foundChatsList.innerHTML = "";  // Очищаем предыдущие результаты поиска
 
         if (result.chats.length > 0) {
