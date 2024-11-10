@@ -1,5 +1,5 @@
-from typing import Optional
-from fastapi import HTTPException, status
+from typing import Optional, Tuple
+from fastapi import HTTPException, status, WebSocket
 from jose import JWTError, jwt
 
 SECRET_KEY = "secretkey"
@@ -26,3 +26,12 @@ def get_user_chat(token: str, get_type: str) -> Optional[str]:
         return result
     except JWTError:
         raise credentials_exception
+
+async def auth_user(websocket: WebSocket, token: str) -> Optional[Tuple[str, str]]:
+    user = get_user_chat(token, "email")
+    chat = get_user_chat(token, "name_chat")
+    if user and chat:
+        return user, chat
+    else:
+        await websocket.send_text("Ошибка: не удалось подключиться")
+        return None

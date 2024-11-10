@@ -1,1 +1,1 @@
-from .auth import get_user_chat
+from .auth import get_user_chat, auth_user
