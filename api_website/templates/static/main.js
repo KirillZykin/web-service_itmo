@@ -18,11 +18,10 @@ async function searchChats(event) {
     try {
         const response = await fetch(`/search-chats?query=${encodeURIComponent(searchQuery)}`);
         const result = await response.json();
-
         const foundChatsList = document.getElementById("foundChats");
         foundChatsList.innerHTML = "";  // Очищаем предыдущие результаты поиска
 
-        if (result.chats) {
+        if (result.chats.length > 0) {
             result.chats.forEach(chat => {
                 const chatItem = document.createElement("li");
                 chatItem.onclick = () => enterChatAndGetToken(chat.name);
@@ -31,12 +30,13 @@ async function searchChats(event) {
                 foundChatsList.appendChild(chatItem);
             });
         } else {
-            foundChatsList.innerHTML = "<li>Ничего не найдено</li>";
-        //     TODO чтобы появлялась
+            const chatItem = document.createElement("li");
+            chatItem.className = "chat-item";
+            chatItem.textContent = "Ничего не найдено";
+            foundChatsList.appendChild(chatItem);
         }
     } catch (error) {
-        console.error("Ошибка при выполнении поиска:", error);
-    //     TODO алерт
+        alert("Ошибка при выполнении поиска:" + error)
     }
 }
 
