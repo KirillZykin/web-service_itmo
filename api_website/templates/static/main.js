@@ -67,3 +67,9 @@ async function enterChatAndGetToken(chatName) {
         console.error('Request failed', error);
     }
 }
+
+function logout() {
+    // Удаляем токен из localStorage
+    localStorage.removeItem("token");
+    window.location.href = "/logout";
+}

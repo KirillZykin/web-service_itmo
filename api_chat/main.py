@@ -28,8 +28,8 @@ async def handle_authentication(websocket: WebSocket, token: str) -> Optional[st
     user_data = await auth_user(websocket, token)
     if user_data:
         user, chat = user_data
-        await manager.update_chat_for_connection(websocket, chat) #TODO надо ли?
-        await manager.broadcast(f"{user} присоединился к чату, поприветствуйте!", chat) #TODO сделать приветсвия из дс
+        await manager.update_chat_for_connection(websocket, chat)
+        await manager.broadcast(f"{user} присоединился к чату, поприветствуйте!", chat)
         return chat
     return None
 
