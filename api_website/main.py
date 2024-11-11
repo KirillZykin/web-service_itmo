@@ -11,14 +11,11 @@ from database import verify_password, get_password_hash, engine, Base, get_db, c
     search_chats_by_name
 from orm import UserResponse, ChatCreate, ChatTokenRequest
 
-# Create database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-# Генерация ключа для подписи cookies
 app.add_middleware(SessionMiddleware, secret_key="secret_key_123")
 templates = Jinja2Templates(directory="templates")
-# Настройка маршрута для статических файлов
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
 # Обработчик для страницы регистрации
@@ -120,14 +117,11 @@ async def search_chats(request: Request, query: str = Query(...), db: Session = 
 @app.post("/get_token_chat/")
 async def get_token_for_chat(chat_request: ChatTokenRequest, request: Request):
     user = request.session.get("user")
-    # Validate chat_name or add additional logic if needed
 
     if not chat_request.chat_name:
         raise HTTPException(status_code=400, detail="Chat name is required")
 
-    # Generate the JWT token
     access_token = create_access_token(data={"sub": user["email"], "name_chat": chat_request.chat_name})
 
-    # Return the token as a JSON response
     return {"access_token": access_token, "token_type": "bearer"}
 

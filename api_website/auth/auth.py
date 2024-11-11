@@ -5,8 +5,7 @@ from database import User, get_db
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 
-# Secret key for JWT encryption
-SECRET_KEY = "secretkey"  # Replace with a more secure value
+SECRET_KEY = "secretkey"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -17,7 +16,6 @@ credentials_exception = HTTPException(
     headers={"WWW-Authenticate": "Bearer"},
 )
 
-# Function to create a JWT access token
 def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     to_encode = data.copy()
     
@@ -30,7 +28,6 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# Function to verify and decode JWT token
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
 
     try:
