@@ -131,6 +131,3 @@ async def get_token_for_chat(chat_request: ChatTokenRequest, request: Request):
     # Return the token as a JSON response
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.get("/chat/", response_class=HTMLResponse)
-def chat(request: Request):
-    return templates.TemplateResponse("chat.html", {"request": request})

@@ -1,7 +1,10 @@
 import json
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from typing import Optional
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
@@ -16,6 +19,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 manager = ConnectionManager()
@@ -35,6 +40,9 @@ async def handle_message(websocket: WebSocket, chat: str, user: str, message: st
     else:
         await websocket.send_text("Ошибка: сообщение не отправлено. Вы не подключены к чату.")
 
+@app.get("/chat/", response_class=HTMLResponse)
+def chat(request: Request):
+    return templates.TemplateResponse("chat.html", {"request": request})
 
 @app.websocket("/ws/chat/")
 async def websocket_endpoint(websocket: WebSocket):
