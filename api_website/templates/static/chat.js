@@ -12,21 +12,11 @@ ws.onopen = () => {
 
 // Обрабатываем получение сообщений
 ws.onmessage = function (event) {
-    // const messageData = JSON.parse(event.data);
-    console.log(event.data)
     const messagesContainer = document.getElementById('messages');
-
-    // Создание нового элемента для сообщения
     const messageElement = document.createElement('div');
-    messageElement.className = 'message'; // Можно использовать для стилизации
-
-    // Установка текста сообщения
+    messageElement.className = 'message';
     messageElement.textContent = event.data;
-
-    // Добавление нового сообщения в контейнер
     messagesContainer.appendChild(messageElement);
-
-    // Прокрутка контейнера к последнему сообщению
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 };
 

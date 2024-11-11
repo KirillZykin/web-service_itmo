@@ -27,7 +27,7 @@ def get_user_chat(token: str, get_type: str) -> Optional[str]:
     except JWTError:
         raise credentials_exception
 
-async def auth_user(websocket: WebSocket, token: str) -> Optional[Tuple[str, str]]:
+async def read_token(websocket: WebSocket, token: str) -> Optional[Tuple[str, str]]:
     user = get_user_chat(token, "email")
     chat = get_user_chat(token, "name_chat")
     if user and chat:

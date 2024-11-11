@@ -1,14 +1,12 @@
 import json
-
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
 from typing import Optional
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
-from auth import get_user_chat, auth_user
+from auth import get_user_chat, read_token
 from models import ConnectionManager
 
 app = FastAPI()
@@ -24,16 +22,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 manager = ConnectionManager()
 
-async def handle_authentication(websocket: WebSocket, token: str) -> Optional[str]:
-    user_data = await auth_user(websocket, token)
+async def send_hello(websocket: WebSocket, token: str) -> Optional[str]:
+    user_data = await read_token(websocket, token)
     if user_data:
         user, chat = user_data
-        await manager.update_chat_for_connection(websocket, chat)
+        await manager.update_chat(websocket, chat)
         await manager.broadcast(f"{user} присоединился к чату, поприветствуйте!", chat)
         return chat
     return None
 
-async def handle_message(websocket: WebSocket, chat: str, user: str, message: str):
+async def send_message(websocket: WebSocket, chat: str, user: str, message: str):
     if chat:
         await manager.broadcast(f"{user} : {message}", chat)
     else:
@@ -57,11 +55,11 @@ async def websocket_endpoint(websocket: WebSocket):
 
                 if message_type == "join":
                     token = message.get("token")
-                    name_chat = await handle_authentication(websocket, token)
+                    name_chat = await send_hello(websocket, token)
                     name_user = get_user_chat(token, "email")
                 else:
                     message = message.get("content")
-                    await handle_message(websocket, name_chat, name_user, message)
+                    await send_message(websocket, name_chat, name_user, message)
 
 
     except WebSocketDisconnect:

@@ -18,9 +18,12 @@ class ConnectionManager:
     async def broadcast(self, message: str, name_chat: str):
         for connection, chat in self.active_connections:
             if chat == name_chat:
-                await connection.send_text(message)
+                try:
+                    await connection.send_text(message)
+                except Exception:
+                    self.disconnect(connection)
 
-    async def update_chat_for_connection(self, websocket: WebSocket, new_chat: str):
+    async def update_chat(self, websocket: WebSocket, new_chat: str):
         self.active_connections = [
             (conn, new_chat) if conn == websocket else (conn, chat)
             for conn, chat in self.active_connections
