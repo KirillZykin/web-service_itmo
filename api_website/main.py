@@ -5,11 +5,11 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from auth import create_access_token, get_current_user, is_user_auth
+from auth import create_access_token, is_user_auth
 from database import User, get_chats_by_user
 from database import verify_password, get_password_hash, engine, Base, get_db, create_chat, delete_chat, \
     search_chats_by_name
-from orm import UserResponse, ChatCreate, ChatTokenRequest
+from orm import ChatCreate, ChatTokenRequest
 
 Base.metadata.create_all(bind=engine)
 
@@ -70,11 +70,6 @@ async def logout(request: Request):
     request.session.clear()
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     return response
-
-# Protected route to check JWT token validity
-@app.get("/me/", response_model=UserResponse)
-def access_cabinet(current_user: User = Depends(get_current_user)):
-    return {"message": f"Welcome to your cabinet, {current_user.email}!", "user": current_user}
 
 # Обработчик для корневой страницы
 @app.get("/", response_class=HTMLResponse)
