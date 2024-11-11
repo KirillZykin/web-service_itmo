@@ -1,24 +1,21 @@
-from fastapi import FastAPI, Depends, status, Request, Form, Query
+from fastapi import FastAPI, Depends, status, Request, Form, Query, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
-from auth import create_access_token, get_current_user
+from auth import create_access_token, get_current_user, is_user_auth
 from database import User, get_chats_by_user
 from database import verify_password, get_password_hash, engine, Base, get_db, create_chat, delete_chat, \
     search_chats_by_name
-from orm import UserResponse, ChatCreate
+from orm import UserResponse, ChatCreate, ChatTokenRequest
 
-# Create database tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-# Генерация ключа для подписи cookies
 app.add_middleware(SessionMiddleware, secret_key="secret_key_123")
 templates = Jinja2Templates(directory="templates")
-# Настройка маршрута для статических файлов
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
 # Обработчик для страницы регистрации
@@ -51,10 +48,7 @@ async def register(
     db.commit()
     db.refresh(new_user)
 
-    # Создание JWT токена и установка его в cookie
-    access_token = create_access_token(data={"sub": new_user.email})
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
     return response
 
 # User login route
@@ -68,8 +62,14 @@ async def login(request: Request, db: Session = Depends(get_db), username: str =
     access_token = create_access_token(data={"sub": user.email})
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     request.session["user"] = {"email": user.email, "id": user.id}
+    request.session["token"] = access_token
     return response
 
+@app.get("/logout", response_class=HTMLResponse)
+async def logout(request: Request):
+    request.session.clear()
+    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return response
 
 # Protected route to check JWT token validity
 @app.get("/me/", response_model=UserResponse)
@@ -78,9 +78,9 @@ def access_cabinet(current_user: User = Depends(get_current_user)):
 
 # Обработчик для корневой страницы
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, db: Session = Depends(get_db)):
+async def home(request: Request, db: Session = Depends(get_db), is_auth: bool = Depends(is_user_auth)):
     user = request.session.get("user")
-    if user:
+    if is_auth:
         user_chats = get_chats_by_user(db, user['id'])  # Получаем список чатов пользователя
         return templates.TemplateResponse("index.html", {"request": request, "user_chats": user_chats, "user": user})
     return templates.TemplateResponse("index.html", {"request": request, "user": None})
@@ -113,3 +113,15 @@ async def search_chats(request: Request, query: str = Query(...), db: Session = 
         chat_list = [{"name": chat.name} for chat in found_chats]
         return JSONResponse(content={"chats": chat_list})
     return JSONResponse(content={"error": "User not authenticated"}, status_code=401)
+
+@app.post("/get_token_chat/")
+async def get_token_for_chat(chat_request: ChatTokenRequest, request: Request):
+    user = request.session.get("user")
+
+    if not chat_request.chat_name:
+        raise HTTPException(status_code=400, detail="Chat name is required")
+
+    access_token = create_access_token(data={"sub": user["email"], "name_chat": chat_request.chat_name})
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
