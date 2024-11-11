@@ -20,7 +20,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 templates = Jinja2Templates(directory="templates")
-app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 manager = ConnectionManager()
