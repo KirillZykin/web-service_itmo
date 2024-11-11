@@ -27,13 +27,15 @@ async def send_hello(websocket: WebSocket, token: str) -> Optional[str]:
     if user_data:
         user, chat = user_data
         await manager.update_chat(websocket, chat)
-        await manager.broadcast(f"{user} присоединился к чату, поприветствуйте!", chat)
+        welcome_message = f"{user} присоединился к чату, поприветствуйте!"
+        await manager.broadcast(welcome_message, chat)
         return chat
     return None
 
-async def send_message(websocket: WebSocket, chat: str, user: str, message: str):
+async def send_message(websocket: WebSocket, chat: str, sender: str, message: str):
     if chat:
-        await manager.broadcast(f"{user} : {message}", chat)
+        formatted_message = f"{sender} : {message}"
+        await manager.broadcast(formatted_message, chat)
     else:
         await websocket.send_text("Ошибка: сообщение не отправлено. Вы не подключены к чату.")
 
@@ -49,6 +51,7 @@ async def websocket_endpoint(websocket: WebSocket):
     name_user = ""
     try:
         while True:
+            try:
                 data = await websocket.receive_text()
                 message = json.loads(data)
                 message_type = message.get("type")
@@ -60,7 +63,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 else:
                     message = message.get("content")
                     await send_message(websocket, name_chat, name_user, message)
-
+            except WebSocketDisconnect:
+                manager.disconnect(websocket)
+                break
+            except Exception as e:
+                logger.error(f"An error occurred: {e}")
+                await websocket.close(reason=str(e))
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
